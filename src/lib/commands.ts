@@ -6,10 +6,11 @@ export default new Proxy({} as typeof c, {
 		(_, property: string) =>
 		async (...args: unknown[]) => {
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				return await (c as any)[property](...args)
+				return await (c as { [key: string]: (...args: unknown[]) => Promise<unknown> })[property](
+					...args,
+				)
 			} catch (e) {
-				c.errorPopup(String(e))
+				await c.errorPopup(String(e))
 				throw e
 			}
 		},
