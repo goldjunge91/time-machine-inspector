@@ -13,29 +13,31 @@ pub struct DestinationInfoXml {
 	#[serde(rename = "Destinations")]
 	pub destinations: Vec<DestinationXml>,
 }
-
+#[allow(dead_code)]
 #[derive(Deserialize, Debug, Type)]
 #[serde(deny_unknown_fields)]
 pub struct DestinationXml {
-	#[serde(alias = "Kind")]
-	pub kind: String,
-	#[serde(alias = "URL")]
-	pub url: String,
-	#[serde(alias = "Name")]
-	pub name: String,
-	#[serde(alias = "ID")]
-	pub id: String,
-	#[serde(alias = "LastDestination")]
-	pub last_destination: usize,
-	#[serde(alias = "MountPoint")]
-	pub mount_point: String,
+    #[serde(alias = "Kind")]
+    pub kind: String,
+    #[serde(alias = "URL")]
+    pub url: String,
+    #[serde(alias = "Name")]
+    pub name: String,
+    #[serde(alias = "ID")]
+    pub id: String,
+    #[serde(alias = "LastDestination")]
+    pub last_destination: usize,
+    #[serde(alias = "MountPoint")]
+    pub mount_point: Option<String>,
+    // #[serde(alias = "MountPoint")]
+    // pub mount_point: String,
 }
 
 #[derive(Serialize, Debug, Type)]
 pub struct DestinationDetail {
-	pub id: String,
-	pub mount_point: String,
-	pub mount_point_name: String,
+    pub id: String,
+    pub mount_point: String,
+    pub mount_point_name: String,
 }
 
 #[command]
@@ -50,6 +52,8 @@ pub async fn destinationinfo(
 		.expect("Error calling command");
 	check_cmd_success(&output.status, output.stderr.clone())?;
 	println!("Success running destinationinfo");
+	println!("Raw XML output: {}", String::from_utf8_lossy(&output.stdout));
+
 
 	let output_xml: DestinationInfoXml = match plist::from_bytes(&output.stdout) {
 		Ok(v) => v,
@@ -72,18 +76,19 @@ pub async fn destinationinfo(
 		.destinations
 		.into_iter()
 		.map(|dest| {
-			let mount_point_name = if dest.mount_point.starts_with("/Volumes/") {
-				dest.mount_point["/Volumes/".len()..].to_string()
+            let mount_point = dest.mount_point.unwrap_or_default();
+            let mount_point_name = if mount_point.starts_with("/Volumes/") {
+				mount_point["/Volumes/".len()..].to_string()
 			} else {
-				dest.mount_point.clone()
+				mount_point.clone()
 			};
 			DestinationDetail {
 				id: dest.id,
-				mount_point: dest.mount_point,
+				mount_point: mount_point.clone(),
 				mount_point_name,
 			}
 		})
 		.collect();
 
-	Ok(destinations_details)
+    Ok(destinations_details)
 }
