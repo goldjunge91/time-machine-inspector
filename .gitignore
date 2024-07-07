@@ -3,3 +3,11 @@ node_modules
 /dist
 /src-tauri/target
 /src-tauri/WixTools
+.idea/
+.idea/misc.xml
+.idea/modules.xml
+.idea/time-machine-inspector.iml
+.idea/vcs.xml
+.idea/codeStyles/codeStyleConfig.xml
+.idea/codeStyles/Project.xml
+.idea/inspectionProfiles/Project_Default.xml

@@ -159,6 +159,7 @@ pub async fn get_backup<'a>(
 	state: State<'_, LoadedBackups>,
 	destinations_state: State<'_, DestinationsState>,
 ) -> Result<DirMap, String> {
+	println!("get_backup called with destination_id: {}, new_b: {}", destination_id, new_b);
 	let (old_b, new_b) = {
 		let mut destinations = destinations_state.lock()?;
 		let destination = destinations.get_destination(&destination_id)?;
@@ -170,11 +171,16 @@ pub async fn get_backup<'a>(
 			Some(pos) => pos,
 			None => throw!("Unable to find backup {}", new_b),
 		};
-		let old_b = backups
-			.get(new_pos - 1)
-			.ok_or("No previous backup")?
-			.clone()
-			.path;
+		let old_b = if new_pos > 0 {
+			backups
+				.get(new_pos - 1)
+				.ok_or("No previous backup")?
+				.clone()
+				.path
+		} else {
+			// Es gibt kein vorheriges Backup
+			return Ok(DirMap::new()); // Oder eine andere passende Aktion für den ersten Backup
+		};
 		(old_b, new_b)
 	};
 	let old_new = (old_b.clone(), new_b.clone());
@@ -194,7 +200,7 @@ pub async fn get_backup<'a>(
 		let mut loaded_backups = state.lock()?;
 		match loaded_backups.get_mut(&old_new) {
 			Some(loaded_backup) => {
-				if (loaded_backup).loading {
+				if loaded_backup.loading {
 					throw!("Already loading backup");
 				}
 			}
@@ -210,7 +216,7 @@ pub async fn get_backup<'a>(
 		}
 	}
 
-	match do_compare(&old_b, &new_b, w).await {
+	return match do_compare(&old_b, &new_b, w).await {
 		Ok(dir_map) => {
 			let mut loaded_backups = state.lock()?;
 			let backup = LoadedBackup {
@@ -220,12 +226,12 @@ pub async fn get_backup<'a>(
 				loading: false,
 			};
 			loaded_backups.insert(old_new, backup);
-			return Ok(dir_map);
+			Ok(dir_map)
 		}
 		Err(e) => {
 			let mut loaded_backups = state.lock()?;
 			loaded_backups.remove(&old_new);
-			return Err(e);
+			Err(e)
 		}
 	}
 }

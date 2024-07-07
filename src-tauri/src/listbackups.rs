@@ -5,6 +5,7 @@ use specta::Type;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
+use std::path::Path;
 
 #[derive(Serialize, Clone, Type, Default)]
 pub struct Destinations {
@@ -107,6 +108,7 @@ fn listbackups(mount_point: &str) -> Result<Vec<Backup>, String> {
 
 	let backups = paths
 		.into_iter()
+		.filter(|path| Path::new(path).exists())
 		.map(|path| Backup {
 			name: name_from_path(&path),
 			path,
@@ -115,7 +117,8 @@ fn listbackups(mount_point: &str) -> Result<Vec<Backup>, String> {
 	Ok(backups)
 }
 
-fn name_from_path(path: &str) -> String {
+
+	fn name_from_path(path: &str) -> String {
 	let parts: Vec<_> = PathBuf::from(path)
 		.components()
 		.filter_map(|component| match component {

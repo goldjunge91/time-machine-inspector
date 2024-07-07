@@ -30,8 +30,8 @@ export function destinationinfo() {
     return invoke()<DestinationDetail[]>("destinationinfo")
 }
 
-export type Backup = { path: string; name: string }
 export type LoadedBackupItem = { size: number }
+export type Backup = { path: string; name: string }
 export type DestinationDetail = { id: string; mount_point: string; mount_point_name: string }
 export type DirMap = { map: { [key: string]: { [key: string]: LoadedBackupItem } } }
 export type BackupInfo = { old: string; new: string; loading: boolean }

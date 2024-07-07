@@ -124,10 +124,8 @@ fn deserialize_value<T: DeserializeOwned>(value: &Value) -> Result<T, String> {
 
 pub fn compare(old: &str, new: &str) -> Result<DirMap, String> {
 	let mut anchor = Instant::now();
-	let compare_item = "/Users";
-	println!("tmutil compare -X -s '{}' '{}' '{}'", old, new, compare_item);
-
 	println!("tmutil compare -X -s '{}' '{}'", old, new);
+	println!("Starting comparison between '{}' and '{}'", old, new);
 
 	let mut cmd = Command::new("tmutil")
 		.arg("compare")
@@ -135,17 +133,18 @@ pub fn compare(old: &str, new: &str) -> Result<DirMap, String> {
 		.arg("-s")
 		.arg(old)
 		.arg(new)
-		.arg(compare_item)  // Add this line to specify an item to compare
 		.stdout(Stdio::piped())
 		.stderr(Stdio::piped())
 		.spawn()
 		.expect("Error calling command");
 
 	reset_dur(&mut anchor);
-
+	
 	let mut child_out = BufReader::new(cmd.stdout.as_mut().unwrap());
 	let mut lines = Vec::new();
-
+	println!("Raw XML output: {}", String::from_utf8_lossy(&lines));
+	let comparison = parse_xml(&lines)?;
+	println!("Parsed comparison: {:?}", comparison);
 	loop {
 		match child_out.read_until(b'\n', &mut lines) {
 			Ok(0) => break,
@@ -153,7 +152,15 @@ pub fn compare(old: &str, new: &str) -> Result<DirMap, String> {
 		};
 	}
 
-	let output = cmd.wait_with_output().expect("Failed ot wait on command");
+	//let output = cmd.wait_with_output().expect("Failed ot wait on command");
+	let output = cmd.wait_with_output().expect("Failed to wait on command");
+	if !output.status.success() {
+		let stderr = String::from_utf8_lossy(&output.stderr);
+		return Err(format!("tmutil command failed: {}", stderr));
+	}
+	println!("tmutil command stdout: {}", String::from_utf8_lossy(&output.stdout));
+	println!("tmutil command stderr: {}", String::from_utf8_lossy(&output.stderr));
+
 	check_cmd_success(&output.status, output.stderr)?;
 
 	println!("\u{23f1}  {:.3}ms reading output", reset_dur(&mut anchor));
