@@ -12,7 +12,7 @@ pub struct Destinations {
 	pub destinations: Option<HashMap<String, Destination>>,
 }
 impl Destinations {
-	pub fn get_destination<'a>(&'a mut self, id: &str) -> Result<&'a mut Destination, String> {
+	pub fn get_destination(&mut self, id: &str) -> Result<&mut Destination, String> {
 		let paths = self
 			.destinations
 			.as_mut()
@@ -31,7 +31,7 @@ pub struct Destination {
 	pub mount_point: String,
 }
 impl Destination {
-	pub fn load_backups_list<'a>(&'a mut self) -> Result<&Vec<Backup>, String> {
+	pub fn load_backups_list(&mut self) -> Result<&Vec<Backup>, String> {
 		let backups = listbackups(&self.mount_point)?;
 		self.backups = Some(backups);
 		Ok(self.backups.as_ref().unwrap())
@@ -47,12 +47,22 @@ pub struct Backup {
 fn listbackups(mount_point: &str) -> Result<Vec<Backup>, String> {
 	println!("tmutil listbackups");
 
-	let output = Command::new("tmutil")
-		.arg("listbackups")
-		.arg("-d")
-		.arg(mount_point)
-		.output()
-		.expect("Error calling command");
+	println!("tmutil listbackups for mount point: {}", mount_point);
+
+	let output = if mount_point.starts_with("smb://") {
+		Command::new("tmutil")
+			.arg("listbackups")
+			.output()
+			.map_err(|e| format!("Error calling tmutil command: {}", e))?
+	} else {
+		Command::new("tmutil")
+			.arg("listbackups")
+			.arg("-d")
+			.arg(mount_point)
+			.output()
+			.map_err(|e| format!("Error calling tmutil command: {}", e))?
+	};
+
 	check_cmd_success(&output.status, output.stderr.clone())?;
 	println!("Success listing backups");
 
@@ -121,12 +131,12 @@ fn name_from_path(path: &str) -> String {
 
 	let last = parts.last().cloned().unwrap_or_default();
 
-	let catalina = Regex::new(r"^\d{4}\-\d{2}\-\d{2}\-\d{6}$").unwrap();
+	let catalina = Regex::new(r"^\d{4}-\d{2}-\d{2}-\d{6}$").unwrap();
 	if catalina.is_match(&last) {
 		return last;
 	}
 
-	let ventura = Regex::new(r"^\d{4}\-\d{2}\-\d{2}\-\d{6}.backup$").unwrap();
+	let ventura = Regex::new(r"^\d{4}-\d{2}-\d{2}-\d{6}.backup$").unwrap();
 	if ventura.is_match(&last) {
 		return last.trim_end_matches(".backup").to_string();
 	}

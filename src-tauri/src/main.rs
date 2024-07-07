@@ -6,10 +6,9 @@
 use std::thread;
 use std::time::Instant;
 use tauri::api::{dialog, shell};
-use tauri::{
-	command, AboutMetadata, CustomMenuItem, Manager, Menu, MenuEntry, MenuItem, Submenu, Window,
-	WindowBuilder, WindowUrl,
-};
+use tauri::{command, AboutMetadata, CustomMenuItem, Manager, Menu, MenuEntry, MenuItem, Submenu, Window, WindowBuilder, WindowUrl};
+use crate::cmd::{backups_info, get_backup, load_backup_list};
+use crate::destinationinfo::destinationinfo;
 
 mod cmd;
 mod compare;
@@ -29,7 +28,7 @@ fn error_popup(msg: String, win: Window) {
 #[macro_export]
 macro_rules! throw {
 	($($arg:tt)*) => {{
-		return Err(format!($($arg)*))
+		return Err(format!($($arg)*));
 	}};
 }
 
@@ -45,14 +44,14 @@ fn main() {
 		tauri_specta::ts::export(
 			specta::collect_types![
 				error_popup,
-				cmd::load_backup_list,
-				cmd::get_backup,
-				cmd::backups_info,
-				destinationinfo::destinationinfo,
+				load_backup_list,
+				get_backup,
+				backups_info,
+				destinationinfo,
 			],
 			"../bindings.ts",
 		)
-		.unwrap();
+			.unwrap();
 		println!("Generated TS types");
 	}
 
@@ -62,11 +61,11 @@ fn main() {
 		.manage(cmd::DestinationsState(Default::default()))
 		.manage(cmd::LoadedBackups(Default::default()))
 		.invoke_handler(tauri::generate_handler![
-			error_popup,
-			cmd::load_backup_list,
-			cmd::get_backup,
-			cmd::backups_info,
-			destinationinfo::destinationinfo,
+    error_popup,
+    load_backup_list,
+    get_backup,
+    backups_info,
+    destinationinfo,
 		])
 		.setup(|app| {
 			let _window = WindowBuilder::new(app, "main", WindowUrl::default())

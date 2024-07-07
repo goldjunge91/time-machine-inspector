@@ -14,13 +14,13 @@ pub struct DirMap {
 	pub map: HashMap<String, DirContents>,
 }
 
-fn get_parent<'a>(path: &'a Path) -> Result<&'a Path, String> {
+fn get_parent(path: &Path) -> Result<&Path, String> {
 	match path.parent() {
 		Some(p) => Ok(p),
 		None => throw!("No parent of path {}", path.to_string_lossy()),
 	}
 }
-fn get_basename<'a>(path: &'a Path) -> Result<&'a OsStr, String> {
+fn get_basename(path: &Path) -> Result<&OsStr, String> {
 	match path.file_name() {
 		Some(p) => Ok(p),
 		None => throw!("No base of path {}", path.to_string_lossy()),
