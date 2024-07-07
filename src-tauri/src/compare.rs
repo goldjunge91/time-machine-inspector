@@ -124,6 +124,8 @@ fn deserialize_value<T: DeserializeOwned>(value: &Value) -> Result<T, String> {
 
 pub fn compare(old: &str, new: &str) -> Result<DirMap, String> {
 	let mut anchor = Instant::now();
+	let compare_item = "/Users";
+	println!("tmutil compare -X -s '{}' '{}' '{}'", old, new, compare_item);
 
 	println!("tmutil compare -X -s '{}' '{}'", old, new);
 
@@ -133,6 +135,7 @@ pub fn compare(old: &str, new: &str) -> Result<DirMap, String> {
 		.arg("-s")
 		.arg(old)
 		.arg(new)
+		.arg(compare_item)  // Add this line to specify an item to compare
 		.stdout(Stdio::piped())
 		.stderr(Stdio::piped())
 		.spawn()
